@@ -1,6 +1,7 @@
 import math
 import random
 import pygame as pg
+from pygame.sprite import Group
 from pygame.sprite import Sprite
 from settings import *
 vec = pg.math.Vector2
@@ -32,7 +33,8 @@ class Tower(Sprite):
       self.rect.centerx = x
       self.rect.centery = y
       return
-    self.detect_enemy()
+    if self.game.round_active:
+      self.detect_enemy()
 
   def upgrade(self):
     self.type = self.type + '_upgraded'
@@ -41,7 +43,7 @@ class Tower(Sprite):
     self.image = self.game.images['towers'][self.type]
 
   def detect_enemy(self):
-    for enemy in self.game.enemies:
+    for enemy in self.game.round_object.enemies:
       distance_x = abs(self.rect.centerx - enemy.rect.centerx)
       distance_y = abs(self.rect.centery - enemy.rect.centery)
       distance = math.sqrt(distance_x**2 + distance_y**2)
@@ -71,9 +73,10 @@ class ShopItem(Sprite):
 
 
 class Enemy(Sprite):
-  def __init__(self, game, type):
-    Sprite.__init__(self, game.all_sprites, game.enemies)
+  def __init__(self, game, round, type):
+    Sprite.__init__(self, game.all_sprites, game.round_object.enemies)
     self.game = game
+    self.round = round
     self.type = type
     self.image = self.game.images['enemies'][type]
     self.waypoint_n = 0
@@ -99,7 +102,7 @@ class Enemy(Sprite):
     self.rect.center += (self.waypoint_pos - self.rect.center).normalize() * self.speed
 
   def check_for_hit(self):
-    for bullet in self.game.bullets:
+    for bullet in self.game.round_object.bullets:
       if pg.sprite.collide_rect(self, bullet):
         if self.health > bullet.damage: # enemy survives
           self.game.money += bullet.damage
@@ -126,7 +129,7 @@ class TowerArea():
 
 class Bullet(Sprite):
   def __init__(self, game, x, y, direction, damage):
-    Sprite.__init__(self, game.all_sprites, game.bullets)
+    Sprite.__init__(self, game.all_sprites, game.round_object.bullets)
     self.game = game
     self.direction = direction
     self.image = pg.Surface((10, 10))
@@ -147,6 +150,11 @@ class Bullet(Sprite):
 
 
 class Round(Sprite):
+  '''
+  Input: roundnumber (int)
+  Handles enemy spawning
+  Destroys itself when all enemies are destroyed.
+  '''
   def __init__(self, game, round):
     Sprite.__init__(self, game.all_sprites)
     self.game = game
@@ -156,7 +164,10 @@ class Round(Sprite):
     self.rect.center = (0,0)
     self.last_enemy = 0
     self.enemy_counter = 0
-    self.enemies = self.get_enemies()
+    self.enemies_to_spawn = self.get_enemies()
+    self.enemies = Group()
+    self.bullets = Group()
+    
 
   def get_enemies(self):
     n = ROUNDS[self.round]['n']
@@ -167,12 +178,13 @@ class Round(Sprite):
   def spawn_enemy(self):
     ticks = pg.time.get_ticks()
     if ticks - self.last_enemy > ROUNDS[self.round]['rate']: 
-      if self.enemy_counter < len(self.enemies):
-        Enemy(self.game, self.enemies[self.enemy_counter])
+      if self.enemy_counter < len(self.enemies_to_spawn):
+        Enemy(self.game, self, self.enemies_to_spawn[self.enemy_counter])
+        print(self.enemies)
         self.enemy_counter += 1
         self.last_enemy = ticks
       else:
-        if not self.game.enemies:
+        if not self.enemies:
           self.game.round_active = False
           self.kill()
 

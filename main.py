@@ -88,8 +88,9 @@ class Game:
     self.buying = None
     self.tower_active = None
 
-    self.lives = 1
+    self.lives = 10
     self.round = 0
+    self.round_object = None
     self.round_active = False
     self.playing = True
     self.victory = False
@@ -98,8 +99,6 @@ class Game:
     self.all_sprites = Group()
     self.towers = Group()
     self.shop_items = Group()
-    self.enemies = Group()
-    self.bullets = Group()
 
     self.set_up_attributes()
     self.set_up_tile_map()
@@ -171,6 +170,9 @@ class Game:
       self.playing = False
       self.victory = True
 
+    if self.round_object:
+      print(self.round_object.enemy_counter)
+
   def events(self):
     for event in pg.event.get():
       if event.type == pg.QUIT:
@@ -235,7 +237,8 @@ class Game:
           if self.next_round_btn.rect.collidepoint(self.mouse_pos):
             self.round += 1
             self.round_active = True
-            Round(self, self.round)
+            print(self.round_active)
+            self.round_object = Round(self, self.round)
 
   def wait_for_keys(self):
     waiting = True
