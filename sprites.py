@@ -119,7 +119,7 @@ class Enemy(Sprite):
     self.move()
 
 
-class TowerArea():
+class TowerArea:
   def __init__(self, x, y, w, h):
     self.x = x
     self.y = y
@@ -149,24 +149,20 @@ class Bullet(Sprite):
         self.kill()
 
 
-class Round(Sprite):
+class Round:
   '''
   Input: roundnumber (int)
   Handles enemy spawning
   Destroys itself when all enemies are destroyed.
   '''
   def __init__(self, game, round):
-    Sprite.__init__(self, game.all_sprites)
     self.game = game
-    self.round = str(round)
-    self.image = pg.Surface((0, 0))
-    self.rect = self.image.get_rect()
-    self.rect.center = (0,0)
-    self.last_enemy = 0
-    self.enemy_counter = 0
-    self.enemies_to_spawn = self.get_enemies()
     self.enemies = Group()
     self.bullets = Group()
+    self.round = str(round)
+    self.last_enemy = 0
+    self.enemy_order = self.get_enemies()
+    self.enemy_counter = 0
     
 
   def get_enemies(self):
@@ -174,45 +170,27 @@ class Round(Sprite):
     weights = ROUNDS[self.round]['weights']
     return random.choices(ENEMY_TYPES, weights=weights, k=n)
 
-
-  def spawn_enemy(self):
+  def update(self):
+    '''Spawns an enemy once in a timeframe'''
     ticks = pg.time.get_ticks()
     if ticks - self.last_enemy > ROUNDS[self.round]['rate']: 
-      if self.enemy_counter < len(self.enemies_to_spawn):
-        Enemy(self.game, self, self.enemies_to_spawn[self.enemy_counter])
-        print(self.enemies)
+      if self.enemy_counter < len(self.enemy_order):
+        Enemy(self.game, self, self.enemy_order[self.enemy_counter])
         self.enemy_counter += 1
         self.last_enemy = ticks
       else:
         if not self.enemies:
           self.game.round_active = False
-          self.kill()
-
-  def update(self):
-    self.spawn_enemy()
+          self.game.round_object = None
+          del self
 
 
-class Information(Sprite):
-  def __init__(self, game, x, y):
-    Sprite.__init__(self, game.all_sprites)
-    self.game = game
-    self.image = self.game.images['info']['general']
-    self.rect = self.image.get_rect()
-    self.rect.center = (x, y)
-
-  def get_info(self):
-    self.image = self.game.images['info']['general']
-    if self.game.tower_active:
-      self.image = self.game.images['info'][self.game.tower_active.type]
-    for tower in self.game.shop_items:
-      if tower.rect.collidepoint(self.game.mouse_pos):
-        self.image = self.game.images['info'][tower.type]
-        break
-    if self.game.buying:
-      self.image = self.game.images['info'][self.game.buying.type]
-
-  def update(self):
-    self.get_info()
+class Information:
+  def __init__(self, x, y, w, h):
+    self.x = x
+    self.y = y
+    self.w = w
+    self.h = h
 
 
 class Button(Sprite):

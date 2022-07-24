@@ -65,7 +65,7 @@ class Game:
         if tile_object.name == 'next_round_btn':
           self.next_round_btn = NextRoundButton(self, obj_center['x'], obj_center['y'])
         if tile_object.name == 'info_lbl':
-          self.info = Information(self, obj_center['x'], obj_center['y'])
+          self.info = Information(tile_object.x, tile_object.y, tile_object.width, tile_object.height)
         if object_group.name == 'waypoints':
           self.waypoints.append(
             {
@@ -123,9 +123,58 @@ class Game:
       var_rect.bottomright = (x, y)
     self.screen.blit(var, var_rect)
 
+  def draw_tower_info(self):
+    pg.draw.rect(self.screen, RED, (self.info.x, self.info.y, self.info.w, self.info.h))
+
+    dmg = ''
+    rng = ''
+    rate = ''
+    price = ''
+
+    # self.image = self.game.images['info']['general']
+    if self.tower_active:
+      dmg = self.tower_active.damage
+      rng = self.tower_active.range
+      rate = self.tower_active.rate
+      price = ''
+    for item in self.shop_items:
+      if item.rect.collidepoint(self.mouse_pos):
+        dmg = TOWER_TYPES[item.type]['damage']
+        rng = TOWER_TYPES[item.type]['range']
+        rate = TOWER_TYPES[item.type]['rate']
+        price = TOWER_TYPES[item.type]['price']
+        break
+    if self.buying:
+      dmg = self.buying.damage
+      rng = self.buying.range
+      rate = self.buying.rate
+      price = self.buying.price
+
+    size = 32
+    color = BLACK
+    align = 'left'
+    top = 50
+    left = 30
+
+    self.draw_text(
+      'arial', size, f'Damage: {str(dmg)}', color,
+      self.info.x + left, self.info.y + top, align
+    )
+    self.draw_text(
+      'arial', size, f'Range: {str(rng)}', color,
+      self.info.x + left, self.info.y + top + 40, align
+    )
+    self.draw_text(
+      'arial', size, f'Fire rate: {str(dmg)}', color,
+      self.info.x + left, self.info.y + top + 80, align
+    )
+    self.draw_text(
+      'arial', size, f'${str(price)}', color,
+      self.info.x + left, self.info.y + top + 120, align
+    )
+
   def draw(self):
     self.screen.blit(self.map_img, (0,0))
-
     if self.buying or self.tower_active:
       if self.buying:
         r = self.buying.range
@@ -141,7 +190,6 @@ class Game:
       self.screen.blit(circle_surface, (x - r, y - r))
 
     self.all_sprites.draw(self.screen)
-
 
     self.draw_text( 
       'arial', 22, self.upgrade_btn.text, WHITE, 
@@ -159,11 +207,14 @@ class Game:
       'arial', 26, 'Money: $' + str(self.money), (0,11,115), 
       self.map_rect.width - 200, 90, 'center'
     )
+    self.draw_tower_info()
     pg.display.flip()
 
   def update(self):
     self.mouse_pos = pg.mouse.get_pos()
     self.all_sprites.update()
+    if self.round_object:
+      self.round_object.update()
     if self.lives <= 0:
       self.playing = False
     elif self.round >= len(list(ROUNDS)) and not self.round_active:
@@ -237,7 +288,6 @@ class Game:
           if self.next_round_btn.rect.collidepoint(self.mouse_pos):
             self.round += 1
             self.round_active = True
-            print(self.round_active)
             self.round_object = Round(self, self.round)
 
   def wait_for_keys(self):
