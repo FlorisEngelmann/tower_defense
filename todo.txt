@@ -1,0 +1,19 @@
+Functionality:
+- Add different weapons.
+- Create a gamble component, so players can test their luck by buying a random tower/weapon.
+- Make towers aim at enemy
+
+Ways to earn money:
+- Earn extra money after every 5 rounds.
+- Put money on a savingsaccount.
+
+Menu:
+- Settings
+
+Depth:
+- Add more enemies.
+- Add more upgrades.
+- Add more towers.
+
+Graphics:
+- Hit animation

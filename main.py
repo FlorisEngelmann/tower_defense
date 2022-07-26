@@ -80,7 +80,7 @@ class Game:
           )
     self.waypoints = sorted(self.waypoints, key=lambda x: x['n'])
 
-  def set_up_attributes(self):
+  def reset_game(self):
     self.tower_areas = []
     self.waypoints = []
     self.mouse_pos = None
@@ -100,7 +100,7 @@ class Game:
     self.towers = Group()
     self.shop_items = Group()
 
-    self.set_up_attributes()
+    self.reset_game()
     self.set_up_tile_map()
     
   def run(self):
@@ -176,17 +176,20 @@ class Game:
   def draw(self):
     self.screen.blit(self.map_img, (0,0))
     if self.buying or self.tower_active:
+      color = (255,255,255,50)
+      if self.tower_active:
+        r = self.tower_active.range
+        x = self.tower_active.rect.centerx
+        y = self.tower_active.rect.centery
       if self.buying:
         r = self.buying.range
         x = self.buying.rect.centerx
         y = self.buying.rect.centery
-      elif self.tower_active:
-        r = self.tower_active.range
-        x = self.tower_active.rect.centerx
-        y = self.tower_active.rect.centery
+        if not self.buying.is_valid_loc(): 
+          color = (255,0,0,50)
 
       circle_surface = pg.Surface((r*2, r*2), pg.SRCALPHA)
-      pg.draw.circle(circle_surface, (255,255,255,50), (r, r), r)
+      pg.draw.circle(circle_surface, color, (r, r), r)
       self.screen.blit(circle_surface, (x - r, y - r))
 
     self.all_sprites.draw(self.screen)
@@ -205,7 +208,11 @@ class Game:
     )
     self.draw_text( 
       'arial', 26, 'Money: $' + str(self.money), (0,11,115), 
-      self.map_rect.width - 200, 90, 'center'
+      self.map_rect.width - 280, 90, 'center'
+    )
+    self.draw_text( 
+      'arial', 26, 'Lives: ' + str(self.lives), (0,11,115), 
+      self.map_rect.width - 120, 90, 'center'
     )
     self.draw_tower_info()
     pg.display.flip()
@@ -231,28 +238,11 @@ class Game:
       if event.type == pg.MOUSEBUTTONUP:
         
         if self.buying:
-          valid_loc_found = False
-          for tower_area in self.tower_areas:
-            tower_x = self.buying.rect.centerx
-            tower_y = self.buying.rect.centery
-            tower_area_left = tower_area.x
-            tower_area_right = tower_area.x + tower_area.w
-            tower_area_top = tower_area.y
-            tower_area_bottom = tower_area.y + tower_area.h
-            if tower_x < tower_area_right and tower_x > tower_area_left \
-              and tower_y < tower_area_bottom and tower_y > tower_area_top:
-                tower_present = False
-                for t in self.towers:
-                  if self.buying is not t:
-                    if self.buying.rect.collidepoint((t.rect.centerx, t.rect.centery)):
-                      tower_present = True
-                if not tower_present:
-                  self.buying.placed = True
-                  self.tower_active = self.buying
-                  self.money -= self.buying.price
-                  valid_loc_found = True
-                  break
-          if not valid_loc_found:
+          if self.buying.is_valid_loc():
+            self.buying.placed = True
+            self.tower_active = self.buying
+            self.money -= self.buying.price
+          else:
             self.buying.kill()
           self.buying = None
           break
@@ -301,16 +291,19 @@ class Game:
           waiting = False
 
   def show_start_screen(self):
-    self.screen.blit(self.images['screen']['start'], (0, 0))
+    self.screen.blit(self.map_img, (0, 0))
+    self.draw_text('arial', 72, 'Click to start!', BLACK, 750, 375, 'center')
+
     pg.display.flip()
     self.wait_for_keys()
 
   def show_end_screen(self):
+    self.screen.blit(self.map_img, (0, 0))
     if self.victory:
-      end_image = self.images['screen']['win']
+      self.draw_text('arial', 72, 'Victory!', BLACK, 750, 375, 'center')
     else:
-      end_image = self.images['screen']['lose']
-    self.screen.blit(end_image, (0, 0))
+      self.draw_text('arial', 72, 'You died!', BLACK, 750, 375, 'center')
+      
     pg.display.flip()
     self.wait_for_keys()
     self.playing = True

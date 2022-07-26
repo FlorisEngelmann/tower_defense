@@ -8,10 +8,10 @@ vec = pg.math.Vector2
 
 
 class Tower(Sprite):
-  def __init__(self, game, type, pos):
+  def __init__(self, game, _type, pos):
     Sprite.__init__(self, game.all_sprites, game.towers)
     self.game = game
-    self.type = type
+    self.type = _type
     self.set_up_attributes()
     self.last_shot = 0
     self.value = self.price
@@ -19,6 +19,30 @@ class Tower(Sprite):
     self.image = self.game.images['towers'][self.type]
     self.rect = self.image.get_rect()
     self.rect.center = (pos)
+
+  def is_valid_loc(self):
+    ''' checks if tower is in a valid location '''
+    valid_loc_found = False
+    for tower_area in self.game.tower_areas:
+      tower_x = self.rect.centerx
+      tower_y = self.rect.centery
+      tower_area_left = tower_area.x
+      tower_area_right = tower_area.x + tower_area.w
+      tower_area_top = tower_area.y
+      tower_area_bottom = tower_area.y + tower_area.h
+      if tower_x < tower_area_right and tower_x > tower_area_left \
+        and tower_y < tower_area_bottom and tower_y > tower_area_top:
+          tower_present = False
+          for t in self.game.towers:
+            if self is not t:
+              if self.rect.collidepoint((t.rect.centerx, t.rect.centery)):
+                tower_present = True
+                break
+          if not tower_present:
+            valid_loc_found = True
+            break
+
+    return valid_loc_found
 
   def set_up_attributes(self):
     self.damage = TOWER_TYPES[self.type]['damage']
@@ -28,13 +52,18 @@ class Tower(Sprite):
     self.rate = TOWER_TYPES[self.type]['rate']
 
   def update(self):
-    if not self.placed:
-      x,y = pg.mouse.get_pos()
-      self.rect.centerx = x
-      self.rect.centery = y
+    if not self.placed: # refactor
+      self.rect.center = self.game.mouse_pos
       return
+    
     if self.game.round_active:
-      self.detect_enemy()
+      ticks = pg.time.get_ticks()
+      if ticks - self.last_shot > self.rate:
+        enemies_in_range = self.enemies_in_range()
+        if enemies_in_range:
+          first_enemy = max(enemies_in_range, key=lambda x: x.distance_walked)
+          self.shoot(first_enemy)
+          self.last_shot = ticks
 
   def upgrade(self):
     self.type = self.type + '_upgraded'
@@ -42,23 +71,21 @@ class Tower(Sprite):
     self.value += self.price
     self.image = self.game.images['towers'][self.type]
 
-  def detect_enemy(self):
+  def enemies_in_range(self):
+    enemies = []
     for enemy in self.game.round_object.enemies:
       distance_x = abs(self.rect.centerx - enemy.rect.centerx)
       distance_y = abs(self.rect.centery - enemy.rect.centery)
       distance = math.sqrt(distance_x**2 + distance_y**2)
       if distance <= self.range:
-        self.shoot(enemy)
+        enemies.append(enemy)
+      
+    return enemies
 
   def shoot(self, enemy):
-    ticks = pg.time.get_ticks()
-    if ticks - self.last_shot > self.rate:
-      distance_x = enemy.rect.centerx - self.rect.centerx
-      distance_y = enemy.rect.centery - self.rect.centery
-      direction = vec(distance_x, distance_y).normalize() * 30
-      Bullet(self.game, self.rect.centerx, self.rect.centery, direction, self.damage)
-      self.last_shot = ticks
-
+    HitAnimation(self.game, enemy.rect.center)
+    enemy.health -= self.damage
+      
 
 class ShopItem(Sprite):
   def __init__(self, game, type, x, y):
@@ -73,50 +100,53 @@ class ShopItem(Sprite):
 
 
 class Enemy(Sprite):
-  def __init__(self, game, round, type):
+  def __init__(self, game, _round, _type):
     Sprite.__init__(self, game.all_sprites, game.round_object.enemies)
     self.game = game
-    self.round = round
-    self.type = type
-    self.image = self.game.images['enemies'][type]
+    self.round = _round
+    self.type = _type
+    self.original_image = self.game.images['enemies'][self.type]
+    self.image = self.original_image
     self.waypoint_n = 0
     x = self.game.waypoints[self.waypoint_n]['x']
     y = self.game.waypoints[self.waypoint_n]['y']
     self.rect = self.image.get_rect()
     self.rect.center = vec(x, y)
     self.waypoint_pos = vec(x, y)
-    self.speed = ENEMY_PROPS[type]['speed']
-    self.health = ENEMY_PROPS[type]['health']
+    self.speed = ENEMY_PROPS[self.type]['speed']
+    self.health = ENEMY_PROPS[self.type]['health']
+    self.distance_walked = 0
 
   def move(self):
     if self.rect.collidepoint(self.waypoint_pos):
       self.waypoint_n += 1
+
     if self.waypoint_n >= len(self.game.waypoints):
       self.game.lives -= 1
       self.kill()
       return
+    
     self.waypoint_pos = vec(
       self.game.waypoints[self.waypoint_n]['x'], 
       self.game.waypoints[self.waypoint_n]['y']
     )
-    self.rect.center += (self.waypoint_pos - self.rect.center).normalize() * self.speed
+    self.direction = (self.waypoint_pos - self.rect.center).normalize()
+    self.rect.center += self.direction * self.speed
+ 
+  def rotate(self):
+    angle = math.atan2(self.direction[1], self.direction[0]) * (180/math.pi)
+    self.image = pg.transform.rotate(self.original_image, -angle)
 
-  def check_for_hit(self):
-    for bullet in self.game.round_object.bullets:
-      if pg.sprite.collide_rect(self, bullet):
-        if self.health > bullet.damage: # enemy survives
-          self.game.money += bullet.damage
-          self.health -= bullet.damage
-          bullet.kill()
-        else: # enemy dies
-          self.game.money += self.health
-          bullet.damage -= self.health
-          if bullet.damage <= 0: bullet.kill()
-          self.kill()
+  def update_distance(self):
+    self.distance_walked += self.speed 
 
   def update(self):
-    self.check_for_hit()
+    if self.health <= 0:
+      self.game.money += ENEMY_PROPS[self.type]['health']
+      self.kill()
     self.move()
+    self.rotate()
+    self.update_distance()
 
 
 class TowerArea:
@@ -127,26 +157,26 @@ class TowerArea:
     self.h = h
 
 
-class Bullet(Sprite):
-  def __init__(self, game, x, y, direction, damage):
-    Sprite.__init__(self, game.all_sprites, game.round_object.bullets)
-    self.game = game
-    self.direction = direction
-    self.image = pg.Surface((10, 10))
-    self.image.fill(BLACK)
-    self.rect = self.image.get_rect()
-    self.rect.center = vec(x, y)
-    self.damage = damage
+# class Bullet(Sprite):
+#   def __init__(self, game, x, y, direction, damage):
+#     Sprite.__init__(self, game.all_sprites, game.round_object.bullets)
+#     self.game = game
+#     self.direction = direction
+#     self.image = pg.Surface((10, 10))
+#     self.image.fill(BLACK)
+#     self.rect = self.image.get_rect()
+#     self.rect.center = vec(x, y)
+#     self.damage = damage
 
-  def move(self):
-    self.rect.centerx += self.direction[0]
-    self.rect.centery += self.direction[1]
+#   def move(self):
+#     self.rect.centerx += self.direction[0]
+#     self.rect.centery += self.direction[1]
 
-  def update(self):
-    self.move()
-    if self.rect.centerx < 0 or self.rect.centerx > self.game.map_rect.width:
-      if self.rect.centery < 0 or self.rect.centery > self.game.map_rect.height:
-        self.kill()
+#   def update(self):
+#     self.move()
+#     if self.rect.centerx < 0 or self.rect.centerx > self.game.map_rect.width:
+#       if self.rect.centery < 0 or self.rect.centery > self.game.map_rect.height:
+#         self.kill()
 
 
 class Round:
@@ -251,3 +281,22 @@ class NextRoundButton(Button):
       self.image = self.game.images['widgets']['next_round_btn_inactive']
     else:
       self.image = self.game.images['widgets']['next_round_btn']
+
+
+class HitAnimation(Sprite):
+  def __init__(self, game, pos):
+    self.game = game
+    Sprite.__init__(self, self.game.all_sprites)
+    self.image = pg.Surface((30,30))
+    self.image.fill(BLACK)
+    self.rect = self.image.get_rect()
+    self.rect.center = pos
+    self.frame = 0
+
+  def show_animation(self):
+    self.frame += 1
+
+  def update(self):
+    self.show_animation()
+    if self.frame >= 30:
+      self.kill()
