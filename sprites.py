@@ -83,7 +83,7 @@ class Tower(Sprite):
     return enemies
 
   def shoot(self, enemy):
-    HitAnimation(self.game, enemy.rect.center)
+    HitAnimation(self.game, self, enemy)
     enemy.health -= self.damage
       
 
@@ -284,19 +284,43 @@ class NextRoundButton(Button):
 
 
 class HitAnimation(Sprite):
-  def __init__(self, game, pos):
+  def __init__(self, game, tower, enemy):
     self.game = game
     Sprite.__init__(self, self.game.all_sprites)
-    self.image = pg.Surface((30,30))
-    self.image.fill(BLACK)
+    self.tower = tower
+    self.enemy = enemy
+    self.frame = 1
+
+    distance_x = self.enemy.rect.centerx - self.tower.rect.centerx
+    distance_y = self.enemy.rect.centery - self.tower.rect.centery
+    self.distance = math.sqrt(distance_x**2 + distance_y**2)
+    self.angle = math.atan2(distance_y, distance_x) * (180/math.pi)
+    self.center_point = (self.tower.rect.centerx + distance_x/2, self.tower.rect.centery + distance_y/2)
+
+    self.image = self.game.images['hit_animation']['frame_1']
+    self.image = pg.transform.scale(self.image, (self.distance, 10))
+    self.image = pg.transform.rotate(self.image, -self.angle)
     self.rect = self.image.get_rect()
-    self.rect.center = pos
-    self.frame = 0
+    self.rect.center = self.center_point
 
   def show_animation(self):
+    if self.frame >= 13:
+      self.kill()
+    else:
+      self.image = self.game.images['hit_animation'][f'frame_{self.frame}']
+      self.image = pg.transform.scale(self.image, (self.distance, 10))
+      self.image = pg.transform.rotate(self.image, -self.angle)
+
     self.frame += 1
+
 
   def update(self):
     self.show_animation()
-    if self.frame >= 30:
-      self.kill()
+
+
+class MenuButton(Button):
+  def __init__(self, x, y, w, h, fn):
+    self.image = pg.Surface((w, h))
+    self.rect = self.image.get_rect()
+    self.rect.center = (x, y)
+    self.fn = fn

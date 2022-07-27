@@ -6,6 +6,7 @@ import fnmatch
 from settings import *
 from sprites import *
 from tilemap import *
+from menu import *
 
 pg.init()
 pg.display.set_mode((1500, 750))
@@ -14,9 +15,36 @@ pg.display.set_mode((1500, 750))
 class Game:
   def __init__(self):
     pg.display.set_caption(TITLE)
-    self.load_data()
     self.clock = pg.time.Clock()
+    self.load_data()
     self.screen = pg.display.set_mode((self.map_rect.width, self.map_rect.height))
+    self.button_functions()
+    self.load_menus()
+    self.current_menu = None
+    self.playing = False
+    self.game_over = False
+
+  def button_functions(self):
+    self.button_actions = {}
+    def play(game):
+      game.playing = True
+    def play_again(game):
+      game.reset_game()
+
+    self.button_actions['Help'] = lambda: print('help')
+    self.button_actions['Settings'] = lambda: self.show_menu('settings_menu')
+    self.button_actions['Play'] = lambda: play(self)
+    self.button_actions['Sound'] = lambda: print('sound')
+    self.button_actions['Graphics'] = lambda: print('graphics')
+    self.button_actions['Back to main menu'] = lambda: self.show_menu('main_menu')
+    self.button_actions['Play again'] = lambda: play_again(self)
+    self.button_actions['Quit'] = lambda: self.quit()
+
+  def load_menus(self):
+    self.menus = {}
+    for object_group in self.map.tmxdata.objectgroups:
+      if object_group.name[-4:] == 'menu':
+        self.menus[object_group.name] = Menu(self, object_group.name)
 
   def load_data(self):
     game_folder = os.path.dirname(__file__)
@@ -94,6 +122,7 @@ class Game:
     self.round_active = False
     self.playing = True
     self.victory = False
+    self.game_over = False
 
   def new(self):
     self.all_sprites = Group()
@@ -104,8 +133,7 @@ class Game:
     self.set_up_tile_map()
     
   def run(self):
-    self.playing = True
-    while self.playing:
+    while not self.game_over:
       self.clock.tick(FPS)
       self.events()
       self.update()
@@ -131,7 +159,6 @@ class Game:
     rate = ''
     price = ''
 
-    # self.image = self.game.images['info']['general']
     if self.tower_active:
       dmg = self.tower_active.damage
       rng = self.tower_active.range
@@ -225,11 +252,8 @@ class Game:
     if self.lives <= 0:
       self.playing = False
     elif self.round >= len(list(ROUNDS)) and not self.round_active:
-      self.playing = False
+      self.game_over = True
       self.victory = True
-
-    if self.round_object:
-      print(self.round_object.enemy_counter)
 
   def events(self):
     for event in pg.event.get():
@@ -279,34 +303,24 @@ class Game:
             self.round += 1
             self.round_active = True
             self.round_object = Round(self, self.round)
+      if event.type == pg.KEYDOWN:
+        if event.key == pg.K_SPACE:
+          self.show_menu('main_menu')
 
-  def wait_for_keys(self):
-    waiting = True
-    while waiting:
+  def show_menu(self, menu):
+    self.playing = False
+    self.menus[menu].draw_menu()
+    while not self.playing:
       self.clock.tick(FPS)
       for event in pg.event.get():
         if event.type == pg.QUIT:
           self.quit()
         if event.type == pg.MOUSEBUTTONUP:
-          waiting = False
-
-  def show_start_screen(self):
-    self.screen.blit(self.map_img, (0, 0))
-    self.draw_text('arial', 72, 'Click to start!', BLACK, 750, 375, 'center')
-
-    pg.display.flip()
-    self.wait_for_keys()
-
-  def show_end_screen(self):
-    self.screen.blit(self.map_img, (0, 0))
-    if self.victory:
-      self.draw_text('arial', 72, 'Victory!', BLACK, 750, 375, 'center')
-    else:
-      self.draw_text('arial', 72, 'You died!', BLACK, 750, 375, 'center')
-      
-    pg.display.flip()
-    self.wait_for_keys()
-    self.playing = True
+          mouse_pos = pg.mouse.get_pos()
+          for button in self.menus[menu].buttons:
+            if button.rect.collidepoint(mouse_pos):
+              print(button.name)
+              button.action()
 
   def quit(self):
     pg.quit()
@@ -314,9 +328,9 @@ class Game:
 
 
 g = Game()
-g.show_start_screen()
-g.playing = True
+g.show_menu('main_menu')
+# g.playing = True
 while g.playing:
   g.new()
   g.run()
-  g.show_end_screen()
+  g.show_menu('game_over_menu')
