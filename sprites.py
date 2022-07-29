@@ -56,7 +56,7 @@ class Tower(Sprite):
       self.rect.center = self.game.mouse_pos
       return
     
-    if self.game.round_active:
+    if self.game.level_manager.level_active:
       ticks = pg.time.get_ticks()
       if ticks - self.last_shot > self.rate:
         enemies_in_range = self.enemies_in_range()
@@ -73,7 +73,7 @@ class Tower(Sprite):
 
   def enemies_in_range(self):
     enemies = []
-    for enemy in self.game.round_object.enemies:
+    for enemy in self.game.level_manager.level_object.enemies:
       distance_x = abs(self.rect.centerx - enemy.rect.centerx)
       distance_y = abs(self.rect.centery - enemy.rect.centery)
       distance = math.sqrt(distance_x**2 + distance_y**2)
@@ -100,10 +100,9 @@ class ShopItem(Sprite):
 
 
 class Enemy(Sprite):
-  def __init__(self, game, _round, _type):
-    Sprite.__init__(self, game.all_sprites, game.round_object.enemies)
+  def __init__(self, game, level, _type):
+    Sprite.__init__(self, game.all_sprites, level.enemies)
     self.game = game
-    self.round = _round
     self.type = _type
     self.original_image = self.game.images['enemies'][self.type]
     self.image = self.original_image
@@ -155,64 +154,6 @@ class TowerArea:
     self.y = y
     self.w = w
     self.h = h
-
-
-# class Bullet(Sprite):
-#   def __init__(self, game, x, y, direction, damage):
-#     Sprite.__init__(self, game.all_sprites, game.round_object.bullets)
-#     self.game = game
-#     self.direction = direction
-#     self.image = pg.Surface((10, 10))
-#     self.image.fill(BLACK)
-#     self.rect = self.image.get_rect()
-#     self.rect.center = vec(x, y)
-#     self.damage = damage
-
-#   def move(self):
-#     self.rect.centerx += self.direction[0]
-#     self.rect.centery += self.direction[1]
-
-#   def update(self):
-#     self.move()
-#     if self.rect.centerx < 0 or self.rect.centerx > self.game.map_rect.width:
-#       if self.rect.centery < 0 or self.rect.centery > self.game.map_rect.height:
-#         self.kill()
-
-
-class Round:
-  '''
-  Input: roundnumber (int)
-  Handles enemy spawning
-  Destroys itself when all enemies are destroyed.
-  '''
-  def __init__(self, game, round):
-    self.game = game
-    self.enemies = Group()
-    self.bullets = Group()
-    self.round = str(round)
-    self.last_enemy = 0
-    self.enemy_order = self.get_enemies()
-    self.enemy_counter = 0
-    
-
-  def get_enemies(self):
-    n = ROUNDS[self.round]['n']
-    weights = ROUNDS[self.round]['weights']
-    return random.choices(ENEMY_TYPES, weights=weights, k=n)
-
-  def update(self):
-    '''Spawns an enemy once in a timeframe'''
-    ticks = pg.time.get_ticks()
-    if ticks - self.last_enemy > ROUNDS[self.round]['rate']: 
-      if self.enemy_counter < len(self.enemy_order):
-        Enemy(self.game, self, self.enemy_order[self.enemy_counter])
-        self.enemy_counter += 1
-        self.last_enemy = ticks
-      else:
-        if not self.enemies:
-          self.game.round_active = False
-          self.game.round_object = None
-          del self
 
 
 class Information:
@@ -269,18 +210,18 @@ class UpgradeButton(Button):
       self.image.fill(INACTIVE_BTN_COLOR)
 
 
-class NextRoundButton(Button):
+class NextLevelButton(Button):
   def __init__(self, game, x, y):
     Button.__init__(self, game)
-    self.image = self.game.images['widgets']['next_round_btn']
+    self.image = self.game.images['widgets']['next_level_btn']
     self.rect = self.image.get_rect()
     self.rect.center = (x, y)
 
   def update(self):
-    if self.game.round_active:
-      self.image = self.game.images['widgets']['next_round_btn_inactive']
+    if self.game.level_manager.level_active:
+      self.image = self.game.images['widgets']['next_level_btn_inactive']
     else:
-      self.image = self.game.images['widgets']['next_round_btn']
+      self.image = self.game.images['widgets']['next_level_btn']
 
 
 class HitAnimation(Sprite):
@@ -304,7 +245,7 @@ class HitAnimation(Sprite):
     self.rect.center = self.center_point
 
   def show_animation(self):
-    if self.frame >= 13:
+    if self.frame >= 3:
       self.kill()
     else:
       self.image = self.game.images['hit_animation'][f'frame_{self.frame}']
@@ -313,14 +254,5 @@ class HitAnimation(Sprite):
 
     self.frame += 1
 
-
   def update(self):
     self.show_animation()
-
-
-class MenuButton(Button):
-  def __init__(self, x, y, w, h, fn):
-    self.image = pg.Surface((w, h))
-    self.rect = self.image.get_rect()
-    self.rect.center = (x, y)
-    self.fn = fn

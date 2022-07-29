@@ -6,7 +6,8 @@ import fnmatch
 from settings import *
 from sprites import *
 from tilemap import *
-from menu import *
+from menu_manager import *
+from level_manager import *
 
 pg.init()
 pg.display.set_mode((1500, 750))
@@ -18,33 +19,8 @@ class Game:
     self.clock = pg.time.Clock()
     self.load_data()
     self.screen = pg.display.set_mode((self.map_rect.width, self.map_rect.height))
-    self.button_functions()
-    self.load_menus()
-    self.current_menu = None
-    self.playing = False
+    self.menu_manager = MenuManager(self)
     self.game_over = False
-
-  def button_functions(self):
-    self.button_actions = {}
-    def play(game):
-      game.playing = True
-    def play_again(game):
-      game.reset_game()
-
-    self.button_actions['Help'] = lambda: print('help')
-    self.button_actions['Settings'] = lambda: self.show_menu('settings_menu')
-    self.button_actions['Play'] = lambda: play(self)
-    self.button_actions['Sound'] = lambda: print('sound')
-    self.button_actions['Graphics'] = lambda: print('graphics')
-    self.button_actions['Back to main menu'] = lambda: self.show_menu('main_menu')
-    self.button_actions['Play again'] = lambda: play_again(self)
-    self.button_actions['Quit'] = lambda: self.quit()
-
-  def load_menus(self):
-    self.menus = {}
-    for object_group in self.map.tmxdata.objectgroups:
-      if object_group.name[-4:] == 'menu':
-        self.menus[object_group.name] = Menu(self, object_group.name)
 
   def load_data(self):
     game_folder = os.path.dirname(__file__)
@@ -90,8 +66,8 @@ class Game:
           self.upgrade_btn = UpgradeButton(
             self, obj_center['x'], obj_center['y'], tile_object.width, tile_object.height
           )
-        if tile_object.name == 'next_round_btn':
-          self.next_round_btn = NextRoundButton(self, obj_center['x'], obj_center['y'])
+        if tile_object.name == 'next_level_btn':
+          self.next_level_btn = NextLevelButton(self, obj_center['x'], obj_center['y'])
         if tile_object.name == 'info_lbl':
           self.info = Information(tile_object.x, tile_object.y, tile_object.width, tile_object.height)
         if object_group.name == 'waypoints':
@@ -116,11 +92,9 @@ class Game:
     self.buying = None
     self.tower_active = None
 
-    self.lives = 10
-    self.round = 0
-    self.round_object = None
-    self.round_active = False
-    self.playing = True
+    self.lives = 2
+    self.level_manager = LevelManager(self)
+
     self.victory = False
     self.game_over = False
 
@@ -152,7 +126,9 @@ class Game:
     self.screen.blit(var, var_rect)
 
   def draw_tower_info(self):
-    pg.draw.rect(self.screen, RED, (self.info.x, self.info.y, self.info.w, self.info.h))
+    info_surface = pg.Surface((self.info.w, self.info.h), pg.SRCALPHA)
+    info_surface.fill(INFO_BOX_COLOR)
+    self.screen.blit(info_surface, (self.info.x, self.info.y))
 
     dmg = ''
     rng = ''
@@ -230,7 +206,7 @@ class Game:
       self.sell_btn.rect.centerx, self.sell_btn.rect.centery, 'center'
     )
     self.draw_text( 
-      'arial', 26, 'Round ' + str(self.round), (0,11,115), 
+      'arial', 26, 'Level ' + str(self.level_manager.level), (0,11,115), 
       self.map_rect.width - 200, 50, 'center'
     )
     self.draw_text( 
@@ -247,18 +223,13 @@ class Game:
   def update(self):
     self.mouse_pos = pg.mouse.get_pos()
     self.all_sprites.update()
-    if self.round_object:
-      self.round_object.update()
-    if self.lives <= 0:
-      self.playing = False
-    elif self.round >= len(list(ROUNDS)) and not self.round_active:
-      self.game_over = True
-      self.victory = True
+    self.level_manager.update()
 
   def events(self):
     for event in pg.event.get():
       if event.type == pg.QUIT:
         self.quit()
+
       if event.type == pg.MOUSEBUTTONUP:
         
         if self.buying:
@@ -289,7 +260,7 @@ class Game:
                 self.money -= self.tower_active.price
                 break
           if not self.tower_active.rect.collidepoint(self.mouse_pos):
-            if not self.next_round_btn.rect.collidepoint(self.mouse_pos):
+            if not self.next_level_btn.rect.collidepoint(self.mouse_pos):
               self.tower_active = None
         
         for item in self.shop_items:
@@ -298,29 +269,13 @@ class Game:
               self.buying = Tower(self, item.type, self.mouse_pos)
               break
         
-        if not self.round_active:
-          if self.next_round_btn.rect.collidepoint(self.mouse_pos):
-            self.round += 1
-            self.round_active = True
-            self.round_object = Round(self, self.round)
+        if not self.level_manager.level_active:
+          if self.next_level_btn.rect.collidepoint(self.mouse_pos):
+            self.level_manager.next_level()
+
       if event.type == pg.KEYDOWN:
         if event.key == pg.K_SPACE:
-          self.show_menu('main_menu')
-
-  def show_menu(self, menu):
-    self.playing = False
-    self.menus[menu].draw_menu()
-    while not self.playing:
-      self.clock.tick(FPS)
-      for event in pg.event.get():
-        if event.type == pg.QUIT:
-          self.quit()
-        if event.type == pg.MOUSEBUTTONUP:
-          mouse_pos = pg.mouse.get_pos()
-          for button in self.menus[menu].buttons:
-            if button.rect.collidepoint(mouse_pos):
-              print(button.name)
-              button.action()
+          self.menu_manager.show_menu('main_menu')
 
   def quit(self):
     pg.quit()
@@ -328,9 +283,8 @@ class Game:
 
 
 g = Game()
-g.show_menu('main_menu')
-# g.playing = True
-while g.playing:
+g.menu_manager.show_menu('main_menu')
+while not g.game_over:
   g.new()
   g.run()
-  g.show_menu('game_over_menu')
+  g.menu_manager.show_menu('game_over_menu')

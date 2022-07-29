@@ -15,12 +15,14 @@ BROWN = (162, 93, 65)
 
 WIDTH = 1280
 HEIGHT = 720
-FPS = 30
+FPS = 60
 TITLE = "Tower Defense"
 SELL_BTN_COLOR = (148,0,0)
 INACTIVE_BTN_COLOR = DARKGREY
 UPGRADE_BTN_COLOR = (9,111,0)
-INTEREST_RATE = 1.1
+MENU_BTNS_COLOR = BROWN
+MENU_BTNS_TXT_COLOR = WHITE
+INFO_BOX_COLOR = (33, 162, 31, 70)
 
 TOWER_TYPES = {
   'tower_1': {
@@ -84,20 +86,20 @@ ENEMY_PROPS = {
   },
 }
 
-ROUNDS = {
+LEVELS = {
   '1': {
     'weights': [100,0,0],
     'rate': 800,
+    'n': 5
+  },
+  '2': {
+    'weights': [70,30,0],
+    'rate': 800,
     'n': 1
   },
-  # '2': {
-  #   'weights': [70,30,0],
-  #   'rate': 800,
-  #   'n': 1
-  # },
-  # '3': {
-  #   'weights': [50,30,20],
-  #   'rate': 800,
-  #   'n': 1
-  # },
+  '3': {
+    'weights': [50,30,20],
+    'rate': 800,
+    'n': 1
+  },
 }
