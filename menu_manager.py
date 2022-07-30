@@ -11,7 +11,7 @@ class MenuManager:
 
   def load_menus(self):
     self.menus = {}
-    for object_group in self.game.map.tmxdata.objectgroups:
+    for object_group in self.game.asset_manager.map.tmxdata.objectgroups:
       if object_group.name[-4:] == 'menu':
         self.menus[object_group.name] = Menu(self.game, self, object_group.name)
 
@@ -56,14 +56,14 @@ class Menu:
     self.load_menu()
 
   def load_menu(self):
-    for object_group in self.game.map.tmxdata.objectgroups:
+    for object_group in self.game.asset_manager.map.tmxdata.objectgroups:
       if object_group.name == self.menu:
         for btn in object_group:
           action = self.menu_manager.button_actions[btn.name]
           MenuButton(self, btn, action)
 
   def draw_menu(self):
-    self.game.screen.blit(self.game.map_img, (0,0))
+    self.game.screen.blit(self.game.asset_manager.map_img, (0,0))
     self.buttons.draw(self.game.screen)
     for btn in self.buttons:
       self.game.draw_text('arial', 28, btn.name, MENU_BTNS_TXT_COLOR, btn.rect.centerx, btn.rect.centery, 'center')

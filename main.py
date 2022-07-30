@@ -6,8 +6,9 @@ import fnmatch
 from settings import *
 from sprites import *
 from tilemap import *
-from menu_manager import *
-from level_manager import *
+from menu_manager import MenuManager
+from level_manager import LevelManager
+from asset_manager import AssetManager
 
 pg.init()
 pg.display.set_mode((1500, 750))
@@ -17,40 +18,15 @@ class Game:
   def __init__(self):
     pg.display.set_caption(TITLE)
     self.clock = pg.time.Clock()
-    self.load_data()
-    self.screen = pg.display.set_mode((self.map_rect.width, self.map_rect.height))
+    self.asset_manager = AssetManager(self)
+    self.screen = pg.display.set_mode(
+      (self.asset_manager.map_rect.width, self.asset_manager.map_rect.height)
+    )
     self.menu_manager = MenuManager(self)
     self.game_over = False
 
-  def load_data(self):
-    game_folder = os.path.dirname(__file__)
-    map_folder = os.path.join(game_folder, "map")
-    self.map = TiledMap(os.path.join(map_folder , 'map.tmx'))
-    self.map_img = self.map.make_map()
-    self.map_rect = self.map_img.get_rect()
-
-    img_folder = os.path.join(game_folder, "images")
-
-    image_folders = []
-    for file in os.listdir(img_folder):
-      f = os.path.join(img_folder, file)
-      if os.path.isdir(f):
-        image_folders.append(f)
-
-    self.images = {}
-
-    for folder in image_folders:
-      basename = os.path.basename(folder)
-      self.images[basename] = {}
-
-      images = fnmatch.filter(os.listdir(folder), '*.png')
-      for img in images:
-        self.images[basename][img[0:-4]] = pg.image.load(os.path.join(
-          folder, img
-        )).convert_alpha()
-
   def set_up_tile_map(self):
-    for object_group in self.map.tmxdata.objectgroups:
+    for object_group in self.asset_manager.map.tmxdata.objectgroups:
       for tile_object in object_group:
         obj_center = {
           'x': tile_object.x + tile_object.width / 2,
@@ -177,7 +153,7 @@ class Game:
     )
 
   def draw(self):
-    self.screen.blit(self.map_img, (0,0))
+    self.screen.blit(self.asset_manager.map_img, (0,0))
     if self.buying or self.tower_active:
       color = (255,255,255,50)
       if self.tower_active:
@@ -207,15 +183,15 @@ class Game:
     )
     self.draw_text( 
       'arial', 26, 'Level ' + str(self.level_manager.level), (0,11,115), 
-      self.map_rect.width - 200, 50, 'center'
+      self.asset_manager.map_rect.width - 200, 50, 'center'
     )
     self.draw_text( 
       'arial', 26, 'Money: $' + str(self.money), (0,11,115), 
-      self.map_rect.width - 280, 90, 'center'
+      self.asset_manager.map_rect.width - 280, 90, 'center'
     )
     self.draw_text( 
       'arial', 26, 'Lives: ' + str(self.lives), (0,11,115), 
-      self.map_rect.width - 120, 90, 'center'
+      self.asset_manager.map_rect.width - 120, 90, 'center'
     )
     self.draw_tower_info()
     pg.display.flip()
@@ -269,8 +245,8 @@ class Game:
               self.buying = Tower(self, item.type, self.mouse_pos)
               break
         
-        if not self.level_manager.level_active:
-          if self.next_level_btn.rect.collidepoint(self.mouse_pos):
+        if self.next_level_btn.rect.collidepoint(self.mouse_pos):
+          if not self.level_manager.level_active:
             self.level_manager.next_level()
 
       if event.type == pg.KEYDOWN:

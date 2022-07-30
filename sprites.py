@@ -16,7 +16,7 @@ class Tower(Sprite):
     self.last_shot = 0
     self.value = self.price
     self.placed = False
-    self.image = self.game.images['towers'][self.type]
+    self.image = self.game.asset_manager.images['towers'][self.type]
     self.rect = self.image.get_rect()
     self.rect.center = (pos)
 
@@ -69,7 +69,7 @@ class Tower(Sprite):
     self.type = self.type + '_upgraded'
     self.set_up_attributes()
     self.value += self.price
-    self.image = self.game.images['towers'][self.type]
+    self.image = self.game.asset_manager.images['towers'][self.type]
 
   def enemies_in_range(self):
     enemies = []
@@ -94,7 +94,7 @@ class ShopItem(Sprite):
     self.type = type
     self.price = TOWER_TYPES[self.type]['price']
     self.size = TOWER_TYPES[self.type]['size']
-    self.image = self.game.images['towers'][self.type]
+    self.image = self.game.asset_manager.images['towers'][self.type]
     self.rect = self.image.get_rect()
     self.rect.center = (x, y)
 
@@ -104,7 +104,7 @@ class Enemy(Sprite):
     Sprite.__init__(self, game.all_sprites, level.enemies)
     self.game = game
     self.type = _type
-    self.original_image = self.game.images['enemies'][self.type]
+    self.original_image = self.game.asset_manager.images['enemies'][self.type]
     self.image = self.original_image
     self.waypoint_n = 0
     x = self.game.waypoints[self.waypoint_n]['x']
@@ -213,15 +213,15 @@ class UpgradeButton(Button):
 class NextLevelButton(Button):
   def __init__(self, game, x, y):
     Button.__init__(self, game)
-    self.image = self.game.images['widgets']['next_level_btn']
+    self.image = self.game.asset_manager.images['widgets']['next_level_btn']
     self.rect = self.image.get_rect()
     self.rect.center = (x, y)
 
   def update(self):
     if self.game.level_manager.level_active:
-      self.image = self.game.images['widgets']['next_level_btn_inactive']
+      self.image = self.game.asset_manager.images['widgets']['next_level_btn_inactive']
     else:
-      self.image = self.game.images['widgets']['next_level_btn']
+      self.image = self.game.asset_manager.images['widgets']['next_level_btn']
 
 
 class HitAnimation(Sprite):
@@ -238,7 +238,7 @@ class HitAnimation(Sprite):
     self.angle = math.atan2(distance_y, distance_x) * (180/math.pi)
     self.center_point = (self.tower.rect.centerx + distance_x/2, self.tower.rect.centery + distance_y/2)
 
-    self.image = self.game.images['hit_animation']['frame_1']
+    self.image = self.game.asset_manager.images['hit_animation']['frame_1']
     self.image = pg.transform.scale(self.image, (self.distance, 10))
     self.image = pg.transform.rotate(self.image, -self.angle)
     self.rect = self.image.get_rect()
@@ -248,7 +248,7 @@ class HitAnimation(Sprite):
     if self.frame >= 3:
       self.kill()
     else:
-      self.image = self.game.images['hit_animation'][f'frame_{self.frame}']
+      self.image = self.game.asset_manager.images['hit_animation'][f'frame_{self.frame}']
       self.image = pg.transform.scale(self.image, (self.distance, 10))
       self.image = pg.transform.rotate(self.image, -self.angle)
 
