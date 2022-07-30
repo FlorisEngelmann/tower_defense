@@ -4,7 +4,19 @@ import pygame as pg
 from pygame.sprite import Group
 from pygame.sprite import Sprite
 from settings import *
+from animation_manager import AnimationManager
 vec = pg.math.Vector2
+
+
+def animate(obj, angle, scale, loop=True):
+  n_images = len(obj.images.keys())
+  obj.image = obj.images[f'frame_{(obj.frame % n_images)}']
+  obj.frame += 1
+  if obj.frame > n_images and not loop:
+    obj.kill()
+
+  obj.image = pg.transform.scale(obj.image, scale)
+  obj.image = pg.transform.rotate(obj.image, -angle)
 
 
 class Tower(Sprite):
@@ -228,9 +240,10 @@ class HitAnimation(Sprite):
   def __init__(self, game, tower, enemy):
     self.game = game
     Sprite.__init__(self, self.game.all_sprites)
+    self.images = self.game.asset_manager.images['hit_animation']
     self.tower = tower
     self.enemy = enemy
-    self.frame = 1
+    self.frame = 0
 
     distance_x = self.enemy.rect.centerx - self.tower.rect.centerx
     distance_y = self.enemy.rect.centery - self.tower.rect.centery
@@ -239,20 +252,12 @@ class HitAnimation(Sprite):
     self.center_point = (self.tower.rect.centerx + distance_x/2, self.tower.rect.centery + distance_y/2)
 
     self.image = self.game.asset_manager.images['hit_animation']['frame_1']
-    self.image = pg.transform.scale(self.image, (self.distance, 10))
+    self.scale = (self.distance, 10)
+    self.image = pg.transform.scale(self.image, self.scale)
     self.image = pg.transform.rotate(self.image, -self.angle)
     self.rect = self.image.get_rect()
     self.rect.center = self.center_point
 
-  def show_animation(self):
-    if self.frame >= 3:
-      self.kill()
-    else:
-      self.image = self.game.asset_manager.images['hit_animation'][f'frame_{self.frame}']
-      self.image = pg.transform.scale(self.image, (self.distance, 10))
-      self.image = pg.transform.rotate(self.image, -self.angle)
-
-    self.frame += 1
-
   def update(self):
-    self.show_animation()
+    animate(self, self.angle, self.scale, loop=False)
+    

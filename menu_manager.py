@@ -44,7 +44,7 @@ class MenuManager:
     self.button_actions['Graphics'] = lambda: print('graphics')
     self.button_actions['Back to main menu'] = lambda: self.show_menu('main_menu')
     self.button_actions['Play again'] = lambda: play_again()
-    self.button_actions['Quit'] = lambda: self.quit()
+    self.button_actions['Quit'] = lambda: self.game.quit()
 
 
 class Menu:

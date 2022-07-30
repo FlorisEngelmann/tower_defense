@@ -53,4 +53,3 @@ class AssetManager:
       for snd in sounds:
         self.sounds[basename][snd[0:-4]] = pg.mixer.Sound(
           os.path.join(folder, snd))
-

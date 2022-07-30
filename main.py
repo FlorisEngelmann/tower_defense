@@ -9,6 +9,7 @@ from tilemap import *
 from menu_manager import MenuManager
 from level_manager import LevelManager
 from asset_manager import AssetManager
+from animation_manager import AnimationManager
 
 pg.init()
 pg.display.set_mode((1500, 750))
