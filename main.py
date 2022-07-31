@@ -9,7 +9,6 @@ from tilemap import *
 from menu_manager import MenuManager
 from level_manager import LevelManager
 from asset_manager import AssetManager
-from animation_manager import AnimationManager
 
 pg.init()
 pg.display.set_mode((1500, 750))
@@ -20,10 +19,10 @@ class Game:
     pg.display.set_caption(TITLE)
     self.clock = pg.time.Clock()
     self.asset_manager = AssetManager(self)
+    self.menu_manager = MenuManager(self)
     self.screen = pg.display.set_mode(
       (self.asset_manager.map_rect.width, self.asset_manager.map_rect.height)
     )
-    self.menu_manager = MenuManager(self)
     self.game_over = False
 
   def set_up_tile_map(self):
@@ -78,6 +77,7 @@ class Game:
   def new(self):
     self.all_sprites = Group()
     self.towers = Group()
+    self.barrels = Group()
     self.shop_items = Group()
 
     self.reset_game()
@@ -90,7 +90,7 @@ class Game:
       self.update()
       self.draw()
 
-  def draw_text(self, font, size, text, color, x, y, align):
+  def draw_text(self, surface, font, size, text, color, x, y, align):
     var = pg.font.Font(pg.font.match_font(font), size)
     var = var.render(text, True, color)
     var_rect = var.get_rect()
@@ -100,13 +100,9 @@ class Game:
       var_rect.center = (x, y)
     elif align == 'right':
       var_rect.bottomright = (x, y)
-    self.screen.blit(var, var_rect)
+    surface.blit(var, var_rect)
 
   def draw_tower_info(self):
-    info_surface = pg.Surface((self.info.w, self.info.h), pg.SRCALPHA)
-    info_surface.fill(INFO_BOX_COLOR)
-    self.screen.blit(info_surface, (self.info.x, self.info.y))
-
     dmg = ''
     rng = ''
     rate = ''
@@ -115,20 +111,23 @@ class Game:
     if self.tower_active:
       dmg = self.tower_active.damage
       rng = self.tower_active.range
-      rate = self.tower_active.rate
+      rate = round(1000 / int(self.tower_active.rate), 1)
       price = ''
     for item in self.shop_items:
       if item.rect.collidepoint(self.mouse_pos):
         dmg = TOWER_TYPES[item.type]['damage']
         rng = TOWER_TYPES[item.type]['range']
-        rate = TOWER_TYPES[item.type]['rate']
+        rate = round(1000 / int(TOWER_TYPES[item.type]['rate']), 1)
         price = TOWER_TYPES[item.type]['price']
         break
     if self.buying:
       dmg = self.buying.damage
       rng = self.buying.range
-      rate = self.buying.rate
+      rate = round(1000 / int(self.buying.rate), 1)
       price = self.buying.price
+
+    info_surface = pg.Surface((self.info.w, self.info.h), pg.SRCALPHA)
+    info_surface.fill(INFO_BOX_COLOR)
 
     size = 32
     color = BLACK
@@ -137,21 +136,24 @@ class Game:
     left = 30
 
     self.draw_text(
-      'arial', size, f'Damage: {str(dmg)}', color,
-      self.info.x + left, self.info.y + top, align
+      info_surface, 'arial', size, f'Damage: {str(dmg)}', color,
+      left, top, align
     )
     self.draw_text(
-      'arial', size, f'Range: {str(rng)}', color,
-      self.info.x + left, self.info.y + top + 40, align
+      info_surface, 'arial', size, f'Range: {str(rng)}', color,
+      left, top + 40, align
+    )
+
+    self.draw_text(
+      info_surface, 'arial', size, f'Fire rate: {rate}/s', color,
+      left, top + 80, align
     )
     self.draw_text(
-      'arial', size, f'Fire rate: {str(dmg)}', color,
-      self.info.x + left, self.info.y + top + 80, align
+      info_surface, 'arial', size, f'${str(price)}', color,
+      left, top + 120, align
     )
-    self.draw_text(
-      'arial', size, f'${str(price)}', color,
-      self.info.x + left, self.info.y + top + 120, align
-    )
+
+    self.screen.blit(info_surface, (self.info.x, self.info.y))
 
   def draw(self):
     self.screen.blit(self.asset_manager.map_img, (0,0))
@@ -173,25 +175,26 @@ class Game:
       self.screen.blit(circle_surface, (x - r, y - r))
 
     self.all_sprites.draw(self.screen)
+    self.barrels.draw(self.screen)
 
     self.draw_text( 
-      'arial', 22, self.upgrade_btn.text, WHITE, 
+      self.screen, 'arial', 22, self.upgrade_btn.text, WHITE, 
       self.upgrade_btn.rect.centerx, self.upgrade_btn.rect.centery, 'center'
     )
     self.draw_text( 
-      'arial', 22, self.sell_btn.text, WHITE, 
+      self.screen, 'arial', 22, self.sell_btn.text, WHITE, 
       self.sell_btn.rect.centerx, self.sell_btn.rect.centery, 'center'
     )
     self.draw_text( 
-      'arial', 26, 'Level ' + str(self.level_manager.level), (0,11,115), 
+      self.screen, 'arial', 26, 'Level ' + str(self.level_manager.level), (0,11,115), 
       self.asset_manager.map_rect.width - 200, 50, 'center'
     )
     self.draw_text( 
-      'arial', 26, 'Money: $' + str(self.money), (0,11,115), 
+      self.screen, 'arial', 26, 'Money: $' + str(self.money), (0,11,115), 
       self.asset_manager.map_rect.width - 280, 90, 'center'
     )
     self.draw_text( 
-      'arial', 26, 'Lives: ' + str(self.lives), (0,11,115), 
+      self.screen, 'arial', 26, 'Lives: ' + str(self.lives), (0,11,115), 
       self.asset_manager.map_rect.width - 120, 90, 'center'
     )
     self.draw_tower_info()

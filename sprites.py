@@ -4,7 +4,6 @@ import pygame as pg
 from pygame.sprite import Group
 from pygame.sprite import Sprite
 from settings import *
-from animation_manager import AnimationManager
 vec = pg.math.Vector2
 
 
@@ -31,6 +30,7 @@ class Tower(Sprite):
     self.image = self.game.asset_manager.images['towers'][self.type]
     self.rect = self.image.get_rect()
     self.rect.center = (pos)
+    self.barrel = Barrel(self.game, self.type, pos)
 
   def is_valid_loc(self):
     ''' checks if tower is in a valid location '''
@@ -66,6 +66,7 @@ class Tower(Sprite):
   def update(self):
     if not self.placed: # refactor
       self.rect.center = self.game.mouse_pos
+      self.barrel.rect.center = self.rect.center
       return
     
     if self.game.level_manager.level_active:
@@ -74,6 +75,12 @@ class Tower(Sprite):
         enemies_in_range = self.enemies_in_range()
         if enemies_in_range:
           first_enemy = max(enemies_in_range, key=lambda x: x.distance_walked)
+
+          distance_x = (first_enemy.rect.centerx - self.rect.centerx)
+          distance_y = (first_enemy.rect.centery - self.rect.centery)
+          angle = math.atan2(distance_y, distance_x) * (180/math.pi)
+          self.barrel.rotate(angle)
+
           self.shoot(first_enemy)
           self.last_shot = ticks
 
@@ -89,6 +96,7 @@ class Tower(Sprite):
       distance_x = abs(self.rect.centerx - enemy.rect.centerx)
       distance_y = abs(self.rect.centery - enemy.rect.centery)
       distance = math.sqrt(distance_x**2 + distance_y**2)
+      
       if distance <= self.range:
         enemies.append(enemy)
       
@@ -98,6 +106,23 @@ class Tower(Sprite):
     HitAnimation(self.game, self, enemy)
     enemy.health -= self.damage
       
+
+class Barrel(Sprite):
+  def __init__(self, game, _type, pos):
+    Sprite.__init__(self, game.all_sprites, game.barrels)
+    self.game = game
+    self.original_image = self.game.asset_manager.images['towers'][f'{_type}_barrel']
+    self.image = self.original_image
+    self.rect = self.image.get_rect()
+    self.rect.center = pos
+
+  def rotate(self, angle):
+    self.image = pg.transform.rotate(self.original_image, -angle - 90)
+    self.rect = self.image.get_rect(center=self.rect.center)
+
+  def update(self):
+    pass
+
 
 class ShopItem(Sprite):
   def __init__(self, game, type, x, y):
@@ -146,7 +171,7 @@ class Enemy(Sprite):
  
   def rotate(self):
     angle = math.atan2(self.direction[1], self.direction[0]) * (180/math.pi)
-    self.image = pg.transform.rotate(self.original_image, -angle)
+    self.image = pg.transform.rotate(self.original_image, -angle - 90)
 
   def update_distance(self):
     self.distance_walked += self.speed 
@@ -260,4 +285,3 @@ class HitAnimation(Sprite):
 
   def update(self):
     animate(self, self.angle, self.scale, loop=False)
-    

@@ -31,7 +31,7 @@ class AssetManager:
     for file in os.listdir(snd_folder):
       f = os.path.join(snd_folder, file)
       if os.path.isdir(f):
-        sounds_folders.append(f)
+        sound_folders.append(f)
 
     self.images = {}
     self.sounds = {}

@@ -27,7 +27,11 @@ class MenuManager:
           mouse_pos = pg.mouse.get_pos()
           for button in self.menus[menu].buttons:
             if button.rect.collidepoint(mouse_pos):
+              self.game.asset_manager.sounds['buttons']['button_click'].play()
               button.action()
+        if event.type == pg.KEYDOWN:
+          if event.key == pg.K_SPACE:
+            self.active = False
 
   def button_functions(self):
     self.button_actions = {}
@@ -66,7 +70,7 @@ class Menu:
     self.game.screen.blit(self.game.asset_manager.map_img, (0,0))
     self.buttons.draw(self.game.screen)
     for btn in self.buttons:
-      self.game.draw_text('arial', 28, btn.name, MENU_BTNS_TXT_COLOR, btn.rect.centerx, btn.rect.centery, 'center')
+      self.game.draw_text(self.game.screen, 'arial', 28, btn.name, MENU_BTNS_TXT_COLOR, btn.rect.centerx, btn.rect.centery, 'center')
     pg.display.flip()
 
 
