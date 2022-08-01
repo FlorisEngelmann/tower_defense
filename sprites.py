@@ -7,15 +7,17 @@ from settings import *
 vec = pg.math.Vector2
 
 
-def animate(obj, angle, scale, loop=True):
+def animate(obj, angle=None, scale=None, loop=True):
   n_images = len(obj.images.keys())
   obj.image = obj.images[f'frame_{(obj.frame % n_images)}']
   obj.frame += 1
   if obj.frame > n_images and not loop:
     obj.kill()
 
-  obj.image = pg.transform.scale(obj.image, scale)
-  obj.image = pg.transform.rotate(obj.image, -angle)
+  if scale:
+    obj.image = pg.transform.scale(obj.image, scale)
+  if angle:
+    obj.image = pg.transform.rotate(obj.image, -angle)
 
 
 class Tower(Sprite):
@@ -60,7 +62,6 @@ class Tower(Sprite):
     self.damage = TOWER_TYPES[self.type]['damage']
     self.price = TOWER_TYPES[self.type]['price']
     self.range = TOWER_TYPES[self.type]['range']
-    self.size = TOWER_TYPES[self.type]['size']
     self.rate = TOWER_TYPES[self.type]['rate']
 
   def update(self):
@@ -103,7 +104,8 @@ class Tower(Sprite):
     return enemies
 
   def shoot(self, enemy):
-    HitAnimation(self.game, self, enemy)
+    Explosion(self.game, self, enemy)
+    # HitAnimation(self.game, self, enemy)
     enemy.health -= self.damage
       
 
@@ -125,15 +127,15 @@ class Barrel(Sprite):
 
 
 class ShopItem(Sprite):
-  def __init__(self, game, type, x, y):
+  def __init__(self, game, _type, x, y):
     Sprite.__init__(self, game.all_sprites, game.shop_items)
     self.game = game
-    self.type = type
+    self.type = _type
     self.price = TOWER_TYPES[self.type]['price']
-    self.size = TOWER_TYPES[self.type]['size']
     self.image = self.game.asset_manager.images['towers'][self.type]
     self.rect = self.image.get_rect()
     self.rect.center = (x, y)
+    self.barrel = Barrel(self.game, _type, (x,y))
 
 
 class Enemy(Sprite):
@@ -239,7 +241,10 @@ class UpgradeButton(Button):
     if self.game.tower_active:
       if not 'upgraded' in self.game.tower_active.type:
         self.text = 'Upgrade: $' + str(TOWER_TYPES[f'{self.game.tower_active.type}_upgraded']['price'])
-        self.image.fill(UPGRADE_BTN_COLOR)
+        if self.game.money >= TOWER_TYPES[f'{self.game.tower_active.type}_upgraded']['price']:
+          self.image.fill(UPGRADE_BTN_COLOR)
+        else:
+          self.image.fill(INACTIVE_BTN_COLOR)
       else:
         self.text = 'Upgraded'
         self.image.fill(INACTIVE_BTN_COLOR)
@@ -276,7 +281,7 @@ class HitAnimation(Sprite):
     self.angle = math.atan2(distance_y, distance_x) * (180/math.pi)
     self.center_point = (self.tower.rect.centerx + distance_x/2, self.tower.rect.centery + distance_y/2)
 
-    self.image = self.game.asset_manager.images['hit_animation']['frame_1']
+    self.image = self.images['hit_animation']['frame_0']
     self.scale = (self.distance, 10)
     self.image = pg.transform.scale(self.image, self.scale)
     self.image = pg.transform.rotate(self.image, -self.angle)
@@ -285,3 +290,19 @@ class HitAnimation(Sprite):
 
   def update(self):
     animate(self, self.angle, self.scale, loop=False)
+
+
+class Explosion(Sprite):
+  def __init__(self, game, tower, enemy):
+    self.game = game
+    Sprite.__init__(self, self.game.all_sprites)
+    self.images = self.game.asset_manager.images['explosion']
+    self.tower = tower
+    self.enemy = enemy
+    self.frame = 0
+    self.image = self.images['frame_0']
+    self.rect = self.image.get_rect()
+    self.rect.center = self.enemy.rect.center
+
+  def update(self):
+    animate(self, loop=False)

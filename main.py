@@ -11,13 +11,15 @@ from level_manager import LevelManager
 from asset_manager import AssetManager
 
 pg.init()
-pg.display.set_mode((1500, 750))
+pg.display.set_mode((1600, 800))
+
 
 
 class Game:
   def __init__(self):
     pg.display.set_caption(TITLE)
     self.clock = pg.time.Clock()
+    self.volume = 0.5
     self.asset_manager = AssetManager(self)
     self.menu_manager = MenuManager(self)
     self.screen = pg.display.set_mode(
@@ -64,11 +66,11 @@ class Game:
     self.tower_areas = []
     self.waypoints = []
     self.mouse_pos = None
-    self.money = 55
+    self.money = 100
     self.buying = None
     self.tower_active = None
 
-    self.lives = 2
+    self.lives = 50
     self.level_manager = LevelManager(self)
 
     self.victory = False
@@ -230,6 +232,7 @@ class Game:
         if self.tower_active:
           if self.sell_btn.rect.collidepoint(self.mouse_pos):
             self.money += int(self.tower_active.value * 0.8)
+            self.tower_active.barrel.kill()
             self.tower_active.kill()
             self.tower_active = None
             break
@@ -255,7 +258,7 @@ class Game:
 
       if event.type == pg.KEYDOWN:
         if event.key == pg.K_SPACE:
-          self.menu_manager.show_menu('main_menu')
+          self.menu_manager.show_menu('pause_menu')
 
   def quit(self):
     pg.quit()

@@ -1,13 +1,14 @@
 Functionality:
 - Add different weapons.
-- Create a gamble component, so players can test their luck by buying a random tower/weapon.
+- Create an algorithm for enemy spawning
 
-Ways to earn money:
+More ways to earn money:
 - Earn extra money after every 5 rounds.
-- Put money on a savingsaccount.
 
 Menu:
 - Settings
+- Info
+- Add different widgets
 
 Depth:
 - Add more enemies.
@@ -16,3 +17,6 @@ Depth:
 
 Graphics:
 - Hit animation
+- Add start and finish
+- Show upgrading props
+- Different resolutions

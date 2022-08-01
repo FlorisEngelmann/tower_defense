@@ -27,73 +27,63 @@ INFO_BOX_COLOR = (33, 162, 31, 70)
 TOWER_TYPES = {
   'green_tank': {
     'damage': 1,
-    'price': 30,
-    'range': 200,
-    'size': 40,
-    'rate': 1000,
+    'price': 50,
+    'range': 170,
+    'rate': 2000,
   },
   'green_tank_upgraded': {
     'damage': 2,
-    'price': 20,
-    'range': 300,
-    'size': 40,
-    'rate': 666,
+    'price': 35,
+    'range': 230,
+    'rate': 1500,
   },
   'blue_tank': {
     'damage': 2,
-    'price': 50,
+    'price': 80,
     'range': 100,
-    'size': 40,
-    'rate': 500,
+    'rate': 1200,
   },
   'blue_tank_upgraded': {
     'damage': 3,
-    'price': 20,
-    'range': 200,
-    'size': 40,
-    'rate': 333,
+    'price': 60,
+    'range': 150,
+    'rate': 1000,
   },
   'sand_tank': {
     'damage': 3,
-    'price': 70,
+    'price': 120,
     'range': 300,
-    'size': 40,
     'rate': 1000,
   },
   'sand_tank_upgraded': {
     'damage': 5,
-    'price': 50,
+    'price': 80,
     'range': 400,
-    'size': 40,
-    'rate': 500,
+    'rate': 700,
   },
   'red_tank': {
     'damage': 6,
-    'price': 100,
-    'range': 300,
-    'size': 40,
+    'price': 170,
+    'range': 180,
     'rate': 2000,
   },
   'red_tank_upgraded': {
     'damage': 8,
-    'price': 80,
-    'range': 200,
-    'size': 40,
+    'price': 120,
+    'range': 230,
     'rate': 1500,
   },
   'black_tank': {
-    'damage': 5,
-    'price': 200,
+    'damage': 4,
+    'price': 250,
     'range': 200,
-    'size': 40,
-    'rate': 300,
+    'rate': 500,
   },
   'black_tank_upgraded': {
-    'damage': 5,
-    'price': 150,
+    'damage': 6,
+    'price': 160,
     'range': 300,
-    'size': 40,
-    'rate': 250,
+    'rate': 300,
   },
 }
 
@@ -103,43 +93,43 @@ ENEMY_TYPES = [
 
 ENEMY_PROPS = {
   'green_bike': {
-    'health': 1,
+    'health': 2,
     'speed': 3,
   },
   'blue_bike': {
-    'health': 2,
+    'health': 3,
     'speed': 4,
   },
   'yellow_bike': {
-    'health': 3,
+    'health': 4,
     'speed': 5,
   },
   'red_bike': {
-    'health': 4,
+    'health': 5,
     'speed': 6,
   },
   'black_bike': {
-    'health': 5,
+    'health': 6,
     'speed': 7,
   },
   'green_car': {
-    'health': 6,
+    'health': 8,
     'speed': 3,
   },
   'blue_car': {
-    'health': 7,
+    'health': 9,
     'speed': 4,
   },
   'yellow_car': {
-    'health': 8,
+    'health': 10,
     'speed': 5,
   },
   'red_car': {
-    'health': 9,
+    'health': 11,
     'speed': 6,
   },
   'black_car': {
-    'health': 10,
+    'health': 12,
     'speed': 7,
   },
 }
@@ -172,6 +162,56 @@ LEVELS = {
   },
   '6': {
     'weights': [10,10,20,20,20,20,0,0,0,0],
+    'rate': 500,
+    'n': 40
+  },
+  '7': {
+    'weights': [10,10,10,10,20,20,20,0,0,0],
+    'rate': 500,
+    'n': 40
+  },
+  '8': {
+    'weights': [10,10,10,10,10,10,40,0,0,0],
+    'rate': 500,
+    'n': 40
+  },
+  '9': {
+    'weights': [0,0,10,10,10,10,30,30,0,0],
+    'rate': 500,
+    'n': 40
+  },
+  '10': {
+    'weights': [0,0,10,10,10,10,10,50,0,0],
+    'rate': 500,
+    'n': 40
+  },
+  '11': {
+    'weights': [0,0,0,10,10,10,10,40,20,0],
+    'rate': 500,
+    'n': 40
+  },
+  '12': {
+    'weights': [0,0,0,10,10,10,10,20,40,0],
+    'rate': 500,
+    'n': 40
+  },
+  '13': {
+    'weights': [0,0,0,0,10,10,10,10,40,20],
+    'rate': 500,
+    'n': 40
+  },
+  '14': {
+    'weights': [0,0,0,0,10,10,10,10,20,40],
+    'rate': 500,
+    'n': 40
+  },
+  '15': {
+    'weights': [0,0,0,0,0,10,10,10,20,50],
+    'rate': 500,
+    'n': 40
+  },
+  '16': {
+    'weights': [0,0,0,0,30,0,0,0,10,60],
     'rate': 500,
     'n': 40
   },

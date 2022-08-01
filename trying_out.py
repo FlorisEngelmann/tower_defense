@@ -64,7 +64,7 @@ class Barrel(Sprite):
   def __init__(self, game, pos):
     Sprite.__init__(self, game.barrels)
     self.game = game
-    self.original_image = self.game.images['towers']['blue_tank_barrel_1']
+    self.original_image = self.game.images['towers']['blue_tank_barrel']
     self.image = self.original_image
     self.rect = self.image.get_rect()
     self.rect.center = pos
