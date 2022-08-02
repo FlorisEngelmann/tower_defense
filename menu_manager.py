@@ -37,6 +37,9 @@ class MenuManager:
   def create_button_functions(self):
     self.button_actions = {}
     def play():
+      if self.game.game_over:
+        play_again()
+        return
       self.active = False
     def play_again():
       self.active = False
@@ -49,7 +52,6 @@ class MenuManager:
         self.game.volume -= 0.1
     
     self.button_actions['Info'] = lambda: self.show_menu('info_menu')
-    self.button_actions['info'] = lambda: None
     self.button_actions['Settings'] = lambda: self.show_menu('settings_menu')
     self.button_actions['Play'] = lambda: play()
     self.button_actions['Increase Volume'] = lambda: increase_sound()
@@ -59,7 +61,7 @@ class MenuManager:
     self.button_actions['Back to main menu'] = lambda: self.show_menu('main_menu')
     self.button_actions['Play again'] = lambda: play_again()
     self.button_actions['Quit'] = lambda: self.game.quit()
-    self.button_actions['Credits'] = lambda: print('Credits')
+    self.button_actions['Credits'] = lambda: self.show_menu('credits_menu')
 
   def draw_label(self, label):
     def draw_image(image, x, y):
@@ -73,6 +75,8 @@ class MenuManager:
     if label.name == 'Volume':
       draw_text(str(round(self.game.volume, 1)))
       return
+    if label.name == 'Credits':
+      draw_image(self.game.asset_manager.images['widgets']['credits'], label.x, label.y)
 
 
 class Menu:
@@ -95,9 +99,10 @@ class Menu:
             self.labels.append(widget)
             
   def draw_menu(self):
-    if not self.menu == 'pause_menu':
+    if self.menu == 'victory_menu' or self.menu == 'lost_menu':
+      self.game.screen.blit(self.game.asset_manager.images['menu'][self.menu], (0,0))
+    elif not self.menu == 'pause_menu':
       self.game.screen.blit(self.game.asset_manager.images['menu']['main_menu'], (0,0))
-    # self.game.screen.blit(self.game.asset_manager.images['menu']['shader'], (0,0))
     self.buttons.draw(self.game.screen)
     for btn in self.buttons:
       self.game.draw_text(self.game.screen, 'arial', 28, btn.name, MENU_BTNS_TXT_COLOR, btn.rect.centerx, btn.rect.centery, 'center')

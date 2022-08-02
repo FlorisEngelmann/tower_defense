@@ -22,7 +22,7 @@ INACTIVE_BTN_COLOR = DARKGREY
 UPGRADE_BTN_COLOR = (9,111,0)
 MENU_BTNS_COLOR = BROWN
 MENU_BTNS_TXT_COLOR = WHITE
-INFO_BOX_COLOR = (33, 162, 31, 70)
+INFO_BOX_COLOR = (0,0,0,30)
 
 TOWER_TYPES = {
   'green_tank': {
@@ -40,7 +40,7 @@ TOWER_TYPES = {
   'blue_tank': {
     'damage': 2,
     'price': 80,
-    'range': 100,
+    'range': 120,
     'rate': 1200,
   },
   'blue_tank_upgraded': {
@@ -51,39 +51,39 @@ TOWER_TYPES = {
   },
   'sand_tank': {
     'damage': 3,
-    'price': 120,
-    'range': 300,
+    'price': 150,
+    'range': 200,
     'rate': 1000,
   },
   'sand_tank_upgraded': {
     'damage': 5,
-    'price': 80,
-    'range': 400,
+    'price': 110,
+    'range': 270,
     'rate': 700,
   },
   'red_tank': {
     'damage': 6,
-    'price': 170,
+    'price': 200,
     'range': 180,
     'rate': 2000,
   },
   'red_tank_upgraded': {
     'damage': 8,
-    'price': 120,
+    'price': 140,
     'range': 230,
     'rate': 1500,
   },
   'black_tank': {
     'damage': 4,
-    'price': 250,
+    'price': 350,
     'range': 200,
     'rate': 500,
   },
   'black_tank_upgraded': {
     'damage': 6,
-    'price': 160,
+    'price': 220,
     'range': 300,
-    'rate': 300,
+    'rate': 350,
   },
 }
 
@@ -93,43 +93,53 @@ ENEMY_TYPES = [
 
 ENEMY_PROPS = {
   'green_bike': {
-    'health': 2,
+    'health': 1,
+    'value': 2,
     'speed': 3,
   },
   'blue_bike': {
-    'health': 3,
+    'health': 2,
+    'value': 3,
     'speed': 4,
   },
   'yellow_bike': {
     'health': 4,
+    'value': 4,
     'speed': 5,
   },
   'red_bike': {
     'health': 5,
+    'value': 5,
     'speed': 6,
   },
   'black_bike': {
     'health': 6,
+    'value': 5,
     'speed': 7,
   },
   'green_car': {
-    'health': 8,
+    'health': 10,
+    'value': 6,
     'speed': 3,
   },
   'blue_car': {
-    'health': 9,
+    'health': 11,
+    'value': 6,
     'speed': 4,
   },
   'yellow_car': {
-    'health': 10,
+    'health': 13,
+    'value': 7,
     'speed': 5,
   },
   'red_car': {
-    'health': 11,
+    'health': 15,
+    'value': 7,
     'speed': 6,
   },
   'black_car': {
-    'health': 12,
+    'health': 20,
+    'value': 8,
     'speed': 7,
   },
 }

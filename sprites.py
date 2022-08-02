@@ -35,7 +35,6 @@ class Tower(Sprite):
     self.barrel = Barrel(self.game, self.type, pos)
 
   def is_valid_loc(self):
-    ''' checks if tower is in a valid location '''
     valid_loc_found = False
     for tower_area in self.game.tower_areas:
       tower_x = self.rect.centerx
@@ -65,7 +64,7 @@ class Tower(Sprite):
     self.rate = TOWER_TYPES[self.type]['rate']
 
   def update(self):
-    if not self.placed: # refactor
+    if not self.placed:
       self.rect.center = self.game.mouse_pos
       self.barrel.rect.center = self.rect.center
       return
@@ -105,7 +104,8 @@ class Tower(Sprite):
 
   def shoot(self, enemy):
     Explosion(self.game, self, enemy)
-    # HitAnimation(self.game, self, enemy)
+    self.game.asset_manager.sounds['explosions']['explosion'].set_volume(self.game.volume)
+    self.game.asset_manager.sounds['explosions']['explosion'].play()
     enemy.health -= self.damage
       
 
@@ -153,6 +153,7 @@ class Enemy(Sprite):
     self.waypoint_pos = vec(x, y)
     self.speed = ENEMY_PROPS[self.type]['speed']
     self.health = ENEMY_PROPS[self.type]['health']
+    self.value = ENEMY_PROPS[self.type]['value']
     self.distance_walked = 0
 
   def move(self):
@@ -160,7 +161,7 @@ class Enemy(Sprite):
       self.waypoint_n += 1
 
     if self.waypoint_n >= len(self.game.waypoints):
-      self.game.lives -= 1
+      self.game.lives -= self.value
       self.kill()
       return
     
@@ -180,7 +181,7 @@ class Enemy(Sprite):
 
   def update(self):
     if self.health <= 0:
-      self.game.money += ENEMY_PROPS[self.type]['health']
+      self.game.money += self.value
       self.kill()
     self.move()
     self.rotate()

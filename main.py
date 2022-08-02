@@ -66,7 +66,7 @@ class Game:
     self.tower_areas = []
     self.waypoints = []
     self.mouse_pos = None
-    self.money = 100
+    self.money = 130
     self.buying = None
     self.tower_active = None
 
@@ -92,8 +92,9 @@ class Game:
       self.update()
       self.draw()
 
-  def draw_text(self, surface, font, size, text, color, x, y, align):
+  def draw_text(self, surface, font, size, text, color, x, y, align, bold=False):
     var = pg.font.Font(pg.font.match_font(font), size)
+    var.bold = bold
     var = var.render(text, True, color)
     var_rect = var.get_rect()
     if align == 'left':
@@ -115,6 +116,11 @@ class Game:
       rng = self.tower_active.range
       rate = round(1000 / int(self.tower_active.rate), 1)
       price = ''
+      if self.upgrade_btn.rect.collidepoint(self.mouse_pos) and not 'upgraded' in self.tower_active.type:
+        dmg = TOWER_TYPES[f'{self.tower_active.type}_upgraded']['damage']
+        rng = TOWER_TYPES[f'{self.tower_active.type}_upgraded']['range']
+        rate = round(1000 / int(TOWER_TYPES[f'{self.tower_active.type}_upgraded']['rate']), 1)
+        price = TOWER_TYPES[f'{self.tower_active.type}_upgraded']['price']
     for item in self.shop_items:
       if item.rect.collidepoint(self.mouse_pos):
         dmg = TOWER_TYPES[item.type]['damage']
@@ -131,7 +137,7 @@ class Game:
     info_surface = pg.Surface((self.info.w, self.info.h), pg.SRCALPHA)
     info_surface.fill(INFO_BOX_COLOR)
 
-    size = 32
+    size = 26
     color = BLACK
     align = 'left'
     top = 50
@@ -189,15 +195,15 @@ class Game:
     )
     self.draw_text( 
       self.screen, 'arial', 26, 'Level ' + str(self.level_manager.level), (0,11,115), 
-      self.asset_manager.map_rect.width - 200, 50, 'center'
+      self.asset_manager.map_rect.width - 150, 40, 'center'
     )
     self.draw_text( 
-      self.screen, 'arial', 26, 'Money: $' + str(self.money), (0,11,115), 
-      self.asset_manager.map_rect.width - 280, 90, 'center'
+      self.screen, 'arial', 32, 'Money: $' + str(self.money), (0,11,115), 
+      self.asset_manager.map_rect.width - 150, 80, 'center', bold=True
     )
     self.draw_text( 
-      self.screen, 'arial', 26, 'Lives: ' + str(self.lives), (0,11,115), 
-      self.asset_manager.map_rect.width - 120, 90, 'center'
+      self.screen, 'arial', 22, 'Lives: ' + str(self.lives), (0,11,115), 
+      self.asset_manager.map_rect.width - 150, 120, 'center'
     )
     self.draw_tower_info()
     pg.display.flip()
@@ -270,4 +276,7 @@ g.menu_manager.show_menu('main_menu')
 while not g.game_over:
   g.new()
   g.run()
-  g.menu_manager.show_menu('game_over_menu')
+  if g.victory:
+    g.menu_manager.show_menu('victory_menu')
+  else:
+    g.menu_manager.show_menu('lost_menu')
